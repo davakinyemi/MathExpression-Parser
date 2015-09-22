@@ -98,10 +98,16 @@ public class ExpressionParser {
         return value;
     }
     
-    private static double solveBracket(String expression){
+    private static double solveExp(String expression){
         char[] tokens = expression.toCharArray(); // convert expression to character array
         StringBuilder sb = new StringBuilder();
         for(int i = 0; i < tokens.length; i++){
+                        
+            if(tokens[i] == '-' && i == 0 || (tokens[i] == '-' && (tokens[i - 1] < '0' || tokens[i - 1] > '9'))){
+                sb.append(tokens[i]);
+                i++;
+            }
+            
             if(isOperator(tokens[i])){                             // is character an operator?
                 numberList.add(Double.parseDouble(sb.toString())); // convert string to number and add to arraylist
                 
@@ -144,7 +150,7 @@ public class ExpressionParser {
         return solvePrecedence();
     }
     
-    private static double solveExp2(String expression){
+    private static double setupExp2(String expression){
         String subExp;
         double answer = 0;
         StringBuilder sb = new StringBuilder();
@@ -160,7 +166,7 @@ public class ExpressionParser {
                     }
                     exp.deleteCharAt(i); // remove corresponding opening bracket
                     subExp = sb.reverse().toString();  // reverse sb to get correct sum
-                    answer = solveBracket(subExp); // solve sum
+                    answer = solveExp(subExp); // solve sum
                     exp.replace(i, i + subExp.length(), Double.toString(answer)); // replace sum with answer
                     numberList.clear(); // clear remaining numbers in numberList
                     sb.setLength(0); // reset sb
@@ -171,15 +177,20 @@ public class ExpressionParser {
         
         for(int i = 0; i < exp.toString().length(); i++){ 
             if(isOperator(exp.toString().charAt(i))){ // if sum still contains any operators
-                answer = solveBracket(exp.toString()); // solve bracket
+                answer = solveExp(exp.toString()); // solve bracket
                 break;
             }
         }
             
+        
+        //clear assets for next expression
+        numberList.clear(); 
+        operatorList.clear();
+        
         return answer;
     }
     
-    public static double solveExp(String expression){
+    public static double setupExp(String expression){
         expression = removeSpaces(expression); // remove spaces from expression
         
         if((expression.contains("(") || expression.contains(")")) && !bracketMatched(expression)){ // check if expression contains brackets and check if brackets are matched
@@ -187,7 +198,8 @@ public class ExpressionParser {
             return -1;
         }
                 
-        return solveExp2(expression);
+        
+        return setupExp2(expression);
     }
     
     /**
@@ -196,7 +208,20 @@ public class ExpressionParser {
     public static void main(String[] args) {
         // TODO code application logic here
         fillMap(); // add keys (operator name and values (precedence) to map
-        System.out.println(solveExp("22-2^2+(10-3)+1+50"));
+        
+        //Example
+        ArrayList<String> list = new ArrayList<>();
+        list.add("22 - 2^2 + (-10 - 3) + 1 + 50");
+        list.add("234 + -5");
+        list.add("10 + 2 * 6");
+        list.add("100 * 2 + 12");
+        list.add("100 * ( 2 + 12 )");
+        list.add("100 * ( 2 + 12 ) / 14");
+        list.add("(3.4 + -4.1)/2");
+        
+        list.stream().forEach((st) -> {
+            System.out.println(st + " = " + setupExp(st));
+        });
     }
     
 }
